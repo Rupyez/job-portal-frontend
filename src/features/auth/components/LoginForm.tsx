@@ -154,6 +154,11 @@ export default function LoginForm() {
 
   const handleGoogleLogin = () => {
     // Google OAuth2 integration will be implemented separately.
+      const backendUrl =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:5001";
+
+    window.location.href = `${backendUrl}/oauth2/authorization/google`;
+
   };
 
   return (

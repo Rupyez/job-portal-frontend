@@ -7,6 +7,7 @@ import PagePlaceholder from "./pages/PagePlaceHolder";
 import LoginPage from "./features/auth/pages/LoginPage";
 import RegisterPage from "./features/auth/pages/RegisterPage";
 import ProtectedRoute from "./features/auth/components/ProtectedRoutes";
+import OAuth2CallbackPage from "./features/auth/pages/OAuth2CallbackPage";
 
 export default function App() {
   return (
@@ -15,6 +16,7 @@ export default function App() {
         {/* Public authentication routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/oauth2/callback" element={<OAuth2CallbackPage/>}/>
 
         {/* Protected application routes */}
         <Route element={<ProtectedRoute />}>

@@ -44,3 +44,16 @@ export const logoutUser = async (
     { refreshToken }
   );
 };
+
+
+
+export const exchangeOAuth2Code = async (
+  code: string
+): Promise<AuthResponse> => {
+  const response = await api.post<AuthResponse>(
+    "/auth/oauth2/exchange",
+    { code }
+  );
+
+  return response.data;
+};
