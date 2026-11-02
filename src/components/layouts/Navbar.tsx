@@ -157,7 +157,7 @@ export default function Navbar() {
           {user ? (
             <div className="mt-3 border-t border-slate-100 pt-3">
               <p className="truncate px-3 py-2 text-sm font-semibold text-slate-800">
-                {user.name}
+                {user.firstName} {user.lastName}
               </p>
 
               <div className="grid grid-cols-2 gap-2">

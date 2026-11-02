@@ -1,5 +1,9 @@
+
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type{ AuthResponse, AuthUser } from "./types/auth.types";
+import type {
+  AuthResponse,
+  AuthUser,
+} from "./types/auth.types";
 
 interface AuthState {
   user: AuthUser | null;
@@ -9,12 +13,6 @@ interface AuthState {
   refreshTokenExpiresAt: string | null;
   isAuthenticated: boolean;
 }
-
-interface AuthState{
-    user: AuthUser | null;
-    isAuthenticated:boolean;
-}
-
 
 const initialState: AuthState = {
   user: null,
@@ -26,27 +24,29 @@ const initialState: AuthState = {
 };
 
 const authSlice = createSlice({
-    name:'auth',
-    initialState,
-    reducers:{
-        setCredentials:(state, action:PayloadAction<AuthResponse>) =>{
-            const response = action.payload;
-            state.user = response.user;
-            state.accessToken = response.jwt;
-            state.refreshToken = response.refreshToken;
-            state.accessTokenExpiresAt = response.accessTokenExpiresAt;
-            state.refreshTokenExpiresAt = response.refreshTokenExpiresAt;
-            state.isAuthenticated = true;
+  name: "auth",
+  initialState,
+  reducers: {
+    setCredentials: (state, action: PayloadAction<AuthResponse>) => {
+      const response = action.payload;
 
-        },
-        setUser:(state, action:PayloadAction<AuthUser>) =>{
-            state.user = action.payload;
-            state.isAuthenticated = true;
-        },
+      state.user = response.user;
+      state.accessToken = response.jwt;
+      state.refreshToken = response.refreshToken;
+      state.accessTokenExpiresAt = response.accessTokenExpiresAt;
+      state.refreshTokenExpiresAt = response.refreshTokenExpiresAt;
+      state.isAuthenticated = true;
+    },
 
-           logout: () => initialState,
-    }
-})
+    setUser: (state, action: PayloadAction<AuthUser>) => {
+      state.user = action.payload;
+      state.isAuthenticated = true;
+    },
 
-export const {setCredentials, setUser, logout} = authSlice.actions;
+    logout: () => initialState,
+  },
+});
+
+export const { setCredentials, setUser, logout } = authSlice.actions;
+
 export default authSlice.reducer;

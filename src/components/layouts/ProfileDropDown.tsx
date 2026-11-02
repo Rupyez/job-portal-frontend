@@ -1,16 +1,17 @@
 
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
   LogOut,
   Settings,
   UserRound,
-} from 'lucide-react';
+} from "lucide-react";
 
-import { logout } from '../../features/auth/authSlice';
-import type { AuthUser } from '../../features/auth/authSlice';
-import { useAppDispatch } from '../../app/hook';
+import { logout } from "../../features/auth/authSlice";
+import type { AuthUser } from "../../features/auth/types/auth.types";
+import { logoutUser } from "../../services/authService";
+import { useAppDispatch, useAppSelector } from "../../app/hook";
 
 interface ProfileDropdownProps {
   user: AuthUser;
@@ -20,21 +21,43 @@ export default function ProfileDropdown({
   user,
 }: ProfileDropdownProps) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
-  const initials = user.name
-    .trim()
+  const refreshToken = useAppSelector(
+    (state) => state.auth.refreshToken
+  );
+
+  const fullName = `${user.firstName} ${user.lastName}`.trim();
+
+  const initials = fullName
     .split(/\s+/)
     .map((part) => part[0])
-    .join('')
+    .join("")
     .slice(0, 2)
     .toUpperCase();
 
-  function handleLogout() {
-    dispatch(logout());
-    setOpen(false);
-    navigate('/');
+  async function handleLogout() {
+    if (loading) return;
+
+    setLoading(true);
+
+    try {
+      if (refreshToken) {
+        await logoutUser(refreshToken);
+      }
+    } catch (error) {
+      console.error("Server logout failed:", error);
+    } finally {
+      // Always clear the local session.
+      dispatch(logout());
+      sessionStorage.removeItem("refreshToken");
+
+      setOpen(false);
+      navigate("/login", { replace: true });
+    }
   }
 
   return (
@@ -47,9 +70,9 @@ export default function ProfileDropdown({
         aria-label="Open profile menu"
         className="flex items-center gap-2 rounded-full p-1.5 transition hover:bg-slate-100"
       >
-        {user.avatarUrl ? (
+        {user.profileImage ? (
           <img
-            src={user.avatarUrl}
+            src={user.profileImage}
             alt=""
             className="h-9 w-9 rounded-full object-cover"
           />
@@ -59,10 +82,7 @@ export default function ProfileDropdown({
           </span>
         )}
 
-        <ChevronDown
-          size={16}
-          className="text-slate-500"
-        />
+        <ChevronDown size={16} className="text-slate-500" />
       </button>
 
       {open && (
@@ -80,7 +100,7 @@ export default function ProfileDropdown({
           >
             <div className="border-b border-slate-100 px-4 py-3">
               <p className="truncate font-semibold text-slate-900">
-                {user.name}
+                {fullName}
               </p>
               <p className="truncate text-sm text-slate-500">
                 {user.email}
@@ -110,11 +130,12 @@ export default function ProfileDropdown({
             <button
               role="menuitem"
               type="button"
+              disabled={loading}
               onClick={handleLogout}
-              className="flex w-full items-center gap-3 border-t border-slate-100 px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50"
+              className="flex w-full items-center gap-3 border-t border-slate-100 px-4 py-3 text-left text-sm text-red-600 hover:bg-red-50 disabled:opacity-60"
             >
               <LogOut size={17} />
-              Sign out
+              {loading ? "Signing out..." : "Sign out"}
             </button>
           </div>
         </>
