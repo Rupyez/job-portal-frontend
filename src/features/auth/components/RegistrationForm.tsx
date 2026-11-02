@@ -1,41 +1,83 @@
 
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, User } from 'lucide-react';
-import PasswordInput from './PasswordInput';
+import { useState, type FormEvent } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Mail, User } from "lucide-react";
+
+import PasswordInput from "./PasswordInput";
+import { registerUser } from "../../../services/authService";
+import { setCredentials } from "../authSlice";
+import { useAppDispatch } from "../../../app/hook";
 
 export default function RegisterForm() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setError("");
+
+    const nameParts = name.trim().split(/\s+/);
+
+    if (nameParts.length < 2) {
+      setError("Please enter your first and last name.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must contain at least 8 characters.");
+      return;
+    }
 
     if (password !== confirmPassword) {
-      alert('Passwords do not match.');
+      setError("Passwords do not match.");
       return;
     }
 
     if (!agreeToTerms) {
-      alert('Please accept the terms and conditions.');
+      setError("Please accept the terms and conditions.");
       return;
     }
 
-    // Backend registration API will be connected later.
-    console.log({
-      name,
-      email,
-      password,
-      agreeToTerms,
-    });
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(" ");
+
+    setLoading(true);
+
+    try {
+      const response = await registerUser({
+        firstName,
+        lastName,
+        email: email.trim(),
+        password,
+      });
+
+      dispatch(setCredentials(response));
+      navigate("/");
+    } catch (err: unknown) {
+      const message =
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err
+          ? (err as { response?: { data?: { message?: string } } })
+              .response?.data?.message
+          : undefined;
+
+      setError(message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleGoogleRegister = () => {
-    // Google OAuth2 integration will be added later.
-    console.log('Google registration requested');
+    // Google OAuth2 integration will be implemented separately.
   };
 
   return (
@@ -69,14 +111,19 @@ export default function RegisterForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Full Name */}
         <div>
-          <label htmlFor="name" className="mb-2 block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="name"
+            className="mb-2 block text-sm font-medium text-gray-700"
+          >
             Full name
           </label>
 
           <div className="relative">
-            <User size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <User
+              size={20}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
 
             <input
               id="name"
@@ -91,14 +138,19 @@ export default function RegisterForm() {
           </div>
         </div>
 
-        {/* Email */}
         <div>
-          <label htmlFor="register-email" className="mb-2 block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="register-email"
+            className="mb-2 block text-sm font-medium text-gray-700"
+          >
             Email address
           </label>
 
           <div className="relative">
-            <Mail size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Mail
+              size={20}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
 
             <input
               id="register-email"
@@ -113,7 +165,6 @@ export default function RegisterForm() {
           </div>
         </div>
 
-        {/* Password */}
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">
             Password
@@ -126,7 +177,6 @@ export default function RegisterForm() {
           />
         </div>
 
-        {/* Confirm Password */}
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">
             Confirm password
@@ -140,7 +190,6 @@ export default function RegisterForm() {
           />
         </div>
 
-        {/* Terms */}
         <label className="flex items-start gap-2 text-sm text-gray-600">
           <input
             type="checkbox"
@@ -151,26 +200,38 @@ export default function RegisterForm() {
           />
 
           <span>
-            I agree to the{' '}
-            <a href="/terms" className="font-medium text-blue-600 hover:underline">
+            I agree to the{" "}
+            <a
+              href="/terms"
+              className="font-medium text-blue-600 hover:underline"
+            >
               Terms and Conditions
-            </a>{' '}
+            </a>{" "}
             and Privacy Policy.
           </span>
         </label>
 
-        {/* Submit */}
+        {error && (
+          <p role="alert" className="text-sm text-red-600">
+            {error}
+          </p>
+        )}
+
         <button
           type="submit"
-          className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700"
+          disabled={loading}
+          className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Create account
+          {loading ? "Creating account..." : "Create account"}
         </button>
       </form>
 
       <p className="mt-6 text-center text-sm text-gray-600">
-        Already have an account?{' '}
-        <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-700">
+        Already have an account?{" "}
+        <Link
+          to="/login"
+          className="font-semibold text-blue-600 hover:text-blue-700"
+        >
           Sign in
         </Link>
       </p>
